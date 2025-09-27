@@ -1,17 +1,29 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // ✅ Correct import for navigation
+import { Link ,useLocation,useNavigate} from 'react-router-dom'; // ✅ Correct import for navigation
 import { assets } from '../assets/assets';
+import { useClerk, useUser ,UserButton} from '@clerk/clerk-react';
+
+const BookIcon = () => (
+    <svg className="w-4 h-4 text-gray-700" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" >
+        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4" />
+    </svg>
+)
 
 const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/' },
-        { name: 'Products', path: '/' },
+        { name: 'Hotels', path: '/rooms' },
         { name: 'Contact', path: '/' },
         { name: 'About', path: '/' },
     ];
 
     const [isScrolled, setIsScrolled] = React.useState(false);
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+    const { openSignIn } = useClerk();
+    const { user } = useUser();
+    const navigate = useNavigate();
+    const location = useLocation(); // ✅ fixed (was missing `()`)
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -23,7 +35,7 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 bg-indigo-500 w-full flex items-center justify-between px-4 md:px-16 lg:px-24 xl:px-32 transition-all duration-500 z-50 ${
+            className={`fixed top-0 left-0 w-full flex items-center justify-between px-4 md:px-16 lg:px-24 xl:px-32 transition-all duration-500 z-50 ${
                 isScrolled
                     ? "bg-white/80 shadow-md text-gray-700 backdrop-blur-lg py-3 md:py-4"
                     : "py-4 md:py-6"
@@ -59,51 +71,65 @@ const Navbar = () => {
                 <button
                     className={`border px-4 py-1 text-sm font-light rounded-full cursor-pointer ${
                         isScrolled ? "text-black" : "text-white"
-                    } transition-all`}
+                    } transition-all`} onClick={() => navigate('/owner')}
                 >
-                    New Launch
+                    Dashboard 
                 </button>
             </div>
 
             {/* Desktop Right */}
             <div className="hidden md:flex items-center gap-4">
-                <svg
-                    className={`h-6 w-6 text-white transition-all duration-500 ${
-                        isScrolled ? "invert" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <button
-                    className={`px-8 py-2.5 rounded-full ml-4 transition-all duration-500 ${
-                        isScrolled ? "text-white bg-black" : "bg-white text-black"
-                    }`}
-                >
-                    Login
-                </button>
+                <img  
+                    src={assets.searchIcon} 
+                    alt='search' 
+                    className={`${isScrolled ? "invert" : ""} h-7 transition-all duration-500`} 
+                />
+                
+                {user ? (
+                    <UserButton>
+                        <UserButton.MenuItems>
+                            <UserButton.Action 
+                                label='My Booking' 
+                                labelIcon={<BookIcon />} 
+                                onClick={() => navigate('/my-bookings')}
+                            />
+                        </UserButton.MenuItems>
+                    </UserButton>
+                ) : (
+                    <button 
+                        onClick={openSignIn}
+                        className="bg-black text-white px-8 py-2.5 rounded-full ml-4 transition-all duration-500"
+                    >
+                        Login
+                    </button>
+                )}
             </div>
 
             {/* Mobile Menu Button */}
+                 
+
             <div className="flex items-center gap-3 md:hidden">
-                <svg
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className={`h-6 w-6 cursor-pointer ${
-                        isScrolled ? "invert" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                >
-                    <line x1="4" y1="6" x2="20" y2="6" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="18" x2="20" y2="18" />
-                </svg>
+                {user &&  (
+                    
+                    <UserButton>
+                        <UserButton.MenuItems>
+                            <UserButton.Action 
+                                label='My Booking' 
+                                labelIcon={<BookIcon />} 
+                                onClick={() => navigate('/my-bookings')}
+                            />
+                        </UserButton.MenuItems>
+                    </UserButton>
+                 )  
+
+               }
+            
+                <img 
+                    onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                    src={assets.menuIcon} 
+                    alt=""  
+                    className={`${isScrolled ? "invert" : ""} h-4`} 
+                />
             </div>
 
             {/* Mobile Menu */}
@@ -112,20 +138,11 @@ const Navbar = () => {
                     isMenuOpen ? "translate-x-0" : "-translate-x-full"
                 }`}
             >
-                <button
+                <button 
                     className="absolute top-4 right-4"
                     onClick={() => setIsMenuOpen(false)}
                 >
-                    <svg
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                    >
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    <img src={assets.closeIcon} alt="close-menu" className="h-6.5" />
                 </button>
 
                 {navLinks.map((link, i) => (
@@ -138,13 +155,23 @@ const Navbar = () => {
                     </Link>
                 ))}
 
-                <button className="border px-4 py-1 text-sm font-light rounded-full cursor-pointer transition-all">
-                    New Launch
-                </button>
+                {user && (
+                    <button 
+                        className="border px-4 py-1 text-sm font-light rounded-full cursor-pointer transition-all" 
+                        onClick={() => navigate('/owner')}
+                    >
+                        Dashboard 
+                    </button>
+                )}
 
-                <button className="bg-black text-white px-8 py-2.5 rounded-full transition-all duration-500">
-                    Login
-                </button>
+                {!user && (
+                    <button 
+                        onClick={openSignIn} 
+                        className="bg-black text-white px-8 py-2.5 rounded-full transition-all duration-500"
+                    >
+                        Login
+                    </button>
+                )}
             </div>
         </nav>
     );
