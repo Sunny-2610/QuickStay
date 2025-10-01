@@ -3,7 +3,7 @@ import React from 'react'
 const Title = ({ title, subtitle, align, font }) => {
   return (
     <div
-      className={`flex flex-col justify-center items-center text-center ${
+      className={`flex flex-col justify-center items-center text-center mb-6 md:mb-8 ${
         align === "left" ? "md:items-start md:text-left" : ""
       }`}
     >
