@@ -7,7 +7,6 @@ const Title = ({ title, subtitle, align, font }) => {
         align === "left" ? "md:items-start md:text-left" : ""
       }`}
     >
-        <Title title="Stay Inspired" subTitle="Join our newsletter and be the first to discover new destinations, exclusive offers, and  travel inspiration." />
       <h1 className={`text-4xl md:text-[48px] ${font || "font-playfair"}`}>
         {title}
       </h1>
