@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import AllRooms from './pages/AllRooms';
+import RoomDetails from './pages/RoomDetails';
 
 const App = () => {
   const isOwnerPath = useLocation().pathname.includes('owner');
@@ -12,10 +13,11 @@ const App = () => {
     <div className="min-h-screen flex flex-col">
       {!isOwnerPath && <Navbar />}
 
-      {/* this area expands so footer is pushed to bottom */}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
+          {/* ‼️  specific route FIRST  */}
+          <Route path="/rooms/:id" element={<RoomDetails />} />
           <Route path="/rooms" element={<AllRooms />} />
         </Routes>
       </main>
