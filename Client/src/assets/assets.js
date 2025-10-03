@@ -74,7 +74,7 @@ export const assets = {
     totalRevenueIcon,
 }
 
-export const cities = [
+export const cities  = [
     "Dubai",
     "Singapore",
     "New York",
