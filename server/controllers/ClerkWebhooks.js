@@ -1,55 +1,46 @@
-import User from "../models/User";
+import User from "../models/User.js";          // 1. add .js
 import { Webhook } from "svix";
 
 const clerkWebhooks = async (req, res) => {
   try {
-    // Create a svix instance with clerk webhook secret
     const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
-    // Getting headers
     const headers = {
       "svix-id": req.headers["svix-id"],
       "svix-timestamp": req.headers["svix-timestamp"],
       "svix-signature": req.headers["svix-signature"],
     };
 
-    // Verifying Headers
     await whook.verify(JSON.stringify(req.body), headers);
 
-    // getting Data from request body
     const { data, type } = req.body;
 
     const userData = {
       _id: data.id,
-      email: data.email_adresses[0].email_adresses,
-      username: data.fist_name + " " + data.last_name,
+      email: data.email_addresses[0].email_address, // 2. fix typos
+      username: data.first_name + " " + data.last_name,
       image: data.image_url,
     };
 
-    // switch cases for different Events
     switch (type) {
-      case "user.created": {
+      case "user.created":
         await User.create(userData);
         break;
-      }
 
-      case "user.Updated": {
-        await User.findByAndUpdate(data.id, userData);
+      case "user.updated":                      // 3. lower-case u
+        await User.findByIdAndUpdate(data.id, userData); // 4. findByIdAndUpdate
         break;
-      }
 
-      case "user.deleted": {
-        await User.findByAndDelete(data.id);
+      case "user.deleted":
+        await User.findByIdAndDelete(data.id); // 5. findByIdAndDelete
         break;
-      }
 
       default:
         break;
     }
-  res.json({success: true, message: "webhook Recieved"})
-
+    res.json({ success: true, message: "webhook received" }); // 6. typo
   } catch (error) {
     console.log(error.message);
-    res.json({success: false, message: error.message});
+    res.json({ success: false, message: error.message });
   }
 };
 
