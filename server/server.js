@@ -21,6 +21,8 @@ app.use("/api/clerk", clerkWebhooks);
 
 app.get('/', (req,res)=>res.send("API is working fine"))
 app.use('/api/user' , userRouter)
+app.use('/api/hotels' , hotelRouter)
+
 
 
 const port = process.env.PORT || 3000;
