@@ -22,9 +22,9 @@ const [searchedcities, setSearchedCities] = useState([])
 
     const fetchUser = async( ) => {
         try {
-            const {data} = await axios.get("/api/user/", {headders: {Authorization: `Bearer ${await getToken()}`}});
+            const {data} = await axios.get("/api/user/", {headers: {Authorization: `Bearer ${await getToken()}`}});
             if (data.success) {
-                setIsOwner(data.role === "owner")
+                setIsOwner(data.role === "hotelOwner")
                 setSearchedCities(data.recentSearchedCities)
             }  else{
                 //retry fetching user details after 5 seconds
