@@ -3,6 +3,7 @@ import Title from '../../components/Title'
 import { assets } from '../../assets/assets'
 import { useAppContext } from '../../context/AppContext'
 
+
 const AddRoom = () => {
   const { axios, getToken } = useAppContext() // ✅ called as a function
 
@@ -58,7 +59,7 @@ const AddRoom = () => {
       })
 
       const { data } = await axios.post(
-        '/api/rooms',
+        '/api/rooms/',
         formData,
         { headers: { Authorization: `Bearer ${await getToken()}` } } // ✅ fixed `Headers` → `headers`
       )
