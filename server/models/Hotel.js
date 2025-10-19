@@ -1,11 +1,11 @@
 import mongoose from "mongoose"
 const hotelschema = new mongoose.Schema({
     
-    name: { type: "string", required: true },
-    address: { type: "string", required: true },
-    contact: { type: "string", required: true },
-    owner: { type: "string", required: true },
-    city: { type: "string", required: true, ref: "User" },
+    name: { type: String, required: true },
+    address: { type: String, required: true },
+    contact: { type: String, required: true },
+    owner: { type: String, ref: "User", required: true },
+    city: { type: String, required: true },
 
 
 }, { timestamps: true });

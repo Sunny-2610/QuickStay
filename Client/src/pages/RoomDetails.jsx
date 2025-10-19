@@ -45,7 +45,7 @@ const RoomDetails = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      console.error(error);
+      toast.error(error?.response?.data?.message || error.message);
     }
   };
 
@@ -64,7 +64,6 @@ const RoomDetails = () => {
             checkInDate,
             checkOutDate,
             guests,
-            paymentMethod: "pay at hotel",
           },
           { headers: { Authorization: `Bearer ${await getToken()}` } }
         );
@@ -78,7 +77,7 @@ const RoomDetails = () => {
         }
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message || error.message);
     }
   };
 

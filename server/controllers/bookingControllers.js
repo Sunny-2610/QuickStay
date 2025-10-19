@@ -30,11 +30,39 @@ export const checkAvailabilityAPI = async (req, res) => {
 };
 
 // API to create a new booking
-// POST /api/booking/book
+// POST /api/bookings/book
 export const createBooking = async (req, res) => {
   try {
     const { room, checkInDate, checkOutDate, guests } = req.body;
     const user = req.user._id;
+
+    // Validate required fields
+    if (!room || !checkInDate || !checkOutDate || !guests) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Missing required fields: room, checkInDate, checkOutDate, guests" 
+      });
+    }
+
+    // Validate dates
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (checkIn < today) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Check-in date cannot be in the past" 
+      });
+    }
+
+    if (checkOut <= checkIn) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Check-out date must be after check-in date" 
+      });
+    }
 
     // Before Booking Check Availability
     const isAvailable = await checkAvailability({
@@ -44,16 +72,24 @@ export const createBooking = async (req, res) => {
     });
 
     if (!isAvailable) {
-      return res.json({ success: false, message: "Room is not available" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Room is not available for the selected dates" 
+      });
     }
 
     // get total price from Room
     const roomData = await Room.findById(room).populate("hotel");
+    if (!roomData) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Room not found" 
+      });
+    }
+
     let totalPrice = roomData.pricePerNight;
 
     // Calculate totalPrice based on nights
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
     const timeDiff = checkOut.getTime() - checkIn.getTime();
     const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -69,10 +105,13 @@ export const createBooking = async (req, res) => {
       totalPrice,
     });
 
-    res.json({ success: true, message: "Booking created successfully" });
+    res.json({ success: true, message: "Booking created successfully", booking });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Failed to create booking" });
+    console.error("Booking creation error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Failed to create booking" 
+    });
   }
 };
 
@@ -93,7 +132,7 @@ export const getUserbookings = async (req, res) => {
 // API to get all bookings for hotel owner
 export const getHotelbookings = async (req, res) => {
   try {
-    const hotel = await Hotel.findOne({ owner: req.auth.userId });
+    const hotel = await Hotel.findOne({ owner: req.user._id });
     if (!hotel) {
       return res.json({ success: false, message: "No Hotel Found" });
     }

@@ -5,20 +5,20 @@ import Title from './Title';
 import { useAppContext } from '../context/AppContext';
 
 const RecommendedHotel = () => {
-  const { rooms, searchedCities } = useAppContext(); // assuming searchedCities comes from context
+  const { rooms, searchedcities } = useAppContext(); // fixed to match context
   const [recommended, setRecommended] = useState([]);
 
   const filterHotels = () => {
-    // Use searchedCities (or any existing list) instead of undefined variable
+    // Use searchedcities (corrected) from context
     const filteredHotels = rooms
       .slice()
-      .filter((room) => searchedCities?.includes(room.hotel.city));
+      .filter((room) => searchedcities?.includes(room.hotel.city));
     setRecommended(filteredHotels);
   };
 
   useEffect(() => {
     filterHotels();
-  }, [rooms, searchedCities]);
+  }, [rooms, searchedcities]); // fixed dependency
 
   return (
     recommended.length > 0 && (

@@ -8,5 +8,6 @@ bookingRouter.post('/check-availability', checkAvailabilityAPI)
 bookingRouter.post('/book',protect, createBooking)
 bookingRouter.get('/user', protect, getUserbookings)
 bookingRouter.get('/hotel',protect, getHotelbookings)
+bookingRouter.get('/owner-dashboard', protect, getHotelbookings)
 
 export default bookingRouter;
