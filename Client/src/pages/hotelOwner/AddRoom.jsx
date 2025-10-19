@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import Title from '../../components/Title'
 import { assets } from '../../assets/assets'
 import { useAppContext } from '../../context/AppContext'
-
+import { toast } from 'react-toastify' // ✅ Added this import
 
 const AddRoom = () => {
-  const { axios, getToken } = useAppContext() // ✅ called as a function
+  const { axios, getToken } = useAppContext() // ✅ Correct usage
 
   const [images, setImages] = useState({
     1: null,
@@ -31,6 +31,7 @@ const AddRoom = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault()
 
+    // ✅ Validate form fields
     if (
       !inputs.roomType ||
       !inputs.pricePerNight ||
@@ -46,25 +47,29 @@ const AddRoom = () => {
       const formData = new FormData()
       formData.append('roomType', inputs.roomType)
       formData.append('pricePerNight', inputs.pricePerNight)
-        
-      //Conerting Amenities to Array & Keeping only enabled Amenities
+
+      // ✅ Converting Amenities to Array & Keeping only enabled Amenities
       const amenities = Object.keys(inputs.amenities).filter(
         (key) => inputs.amenities[key]
       )
       formData.append('amenities', JSON.stringify(amenities))
-      
-      //Adding Images to FormData
+
+      // ✅ Adding Images to FormData
       Object.keys(images).forEach((key) => {
         if (images[key]) formData.append('images', images[key])
       })
 
-      const { data } = await axios.post(
-        '/api/rooms/',
-        formData,
-        { headers: { Authorization: `Bearer ${await getToken()}` } } // ✅ fixed `Headers` → `headers`
-      )
-      if(data.Success){
-        toast.success(data.message)
+      const { data } = await axios.post('/api/rooms/', formData, {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      })
+
+      console.log(data) // 🪶 Helpful for debugging
+
+      // ✅ Handle success response (check for lowercase `success`)
+      if (data.success) {
+        toast.success(data.message || 'Room added successfully!')
+
+        // ✅ Reset all inputs and images
         setInputs({
           roomType: '',
           pricePerNight: 0,
@@ -76,50 +81,50 @@ const AddRoom = () => {
             'Pool Access': false,
           },
         })
+
         setImages({
           1: null,
           2: null,
           3: null,
           4: null,
         })
-        
-      } else{
-        toast.error(data.message)
-      } 
-
-    } catch (error) {
-      toast.error(error.message)
-    } finally {
-        setLoading(false)
+      } else {
+        toast.error(data.message || 'Something went wrong')
       }
+    } catch (error) {
+      console.error(error)
+      toast.error(error.response?.data?.message || error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <form onSubmit={onSubmitHandler}>
       <Title
-        align='left'
-        font='Add Room'
-        title='Add Room'
-        subtitle='Fill in the details carefully and accurately to enhance the user booking experience.'
+        align="left"
+        font="Add Room"
+        title="Add Room"
+        subtitle="Fill in the details carefully and accurately to enhance the user booking experience."
       />
 
-      {/* upload area for images */}
-      <p className='text-gray-800 mt-10'>Images</p>
-      <div className='flex gap-4 flex-wrap mt-10 text-gray-800'>
+      {/* Upload area for images */}
+      <p className="text-gray-800 mt-10">Images</p>
+      <div className="flex gap-4 flex-wrap mt-10 text-gray-800">
         {Object.keys(images).map((key) => (
           <label htmlFor={`roomImage${key}`} key={key}>
             <img
-              className='h-32 w-32 cursor-pointer opacity-80 object-cover border border-gray-300 rounded-md'
+              className="h-32 w-32 cursor-pointer opacity-80 object-cover border border-gray-300 rounded-md"
               src={
                 images[key]
                   ? URL.createObjectURL(images[key])
                   : assets.uploadArea
               }
-              alt=''
+              alt=""
             />
             <input
-              type='file'
-              accept='image/*'
+              type="file"
+              accept="image/*"
               id={`roomImage${key}`}
               hidden
               onChange={(e) =>
@@ -131,30 +136,30 @@ const AddRoom = () => {
       </div>
 
       {/* Room type and price */}
-      <div className='w-full flex max-sm:flex-col sm:gap-4 mt-4'>
-        <div className='flex-1 max-w-48'>
-          <p className='text-gray-800 mt-4'>Room Type</p>
+      <div className="w-full flex max-sm:flex-col sm:gap-4 mt-4">
+        <div className="flex-1 max-w-48">
+          <p className="text-gray-800 mt-4">Room Type</p>
           <select
             value={inputs.roomType}
             onChange={(e) => setInputs({ ...inputs, roomType: e.target.value })}
-            className='border opacity-70 border-gray-300 mt-1 rounded p-2 w-full'
+            className="border opacity-70 border-gray-300 mt-1 rounded p-2 w-full"
           >
-            <option value=''>Select Room Type</option>
-            <option value='Single Bed'>Single Bed</option>
-            <option value='Double Bed'>Double Bed</option>
-            <option value='Luxury Bed'>Luxury Bed</option>
-            <option value='Family Suites'>Family Suites</option>
+            <option value="">Select Room Type</option>
+            <option value="Single Bed">Single Bed</option>
+            <option value="Double Bed">Double Bed</option>
+            <option value="Luxury Bed">Luxury Bed</option>
+            <option value="Family Suites">Family Suites</option>
           </select>
         </div>
 
         <div>
-          <p className='mt-4 text-gray-800'>
-            Price <span className='text-xs'>/night</span>
+          <p className="mt-4 text-gray-800">
+            Price <span className="text-xs">/night</span>
           </p>
           <input
-            type='number'
-            placeholder='0'
-            className='border border-gray-300 mt-1 rounded p-2 w-24'
+            type="number"
+            placeholder="0"
+            className="border border-gray-300 mt-1 rounded p-2 w-24"
             value={inputs.pricePerNight}
             onChange={(e) =>
               setInputs({ ...inputs, pricePerNight: e.target.value })
@@ -164,12 +169,12 @@ const AddRoom = () => {
       </div>
 
       {/* Amenities */}
-      <p className='text-gray-800 mt-4'>Amenities</p>
-      <div className='flex flex-col flex-wrap mt-1 text-gray-800 max-w-sm'>
+      <p className="text-gray-800 mt-4">Amenities</p>
+      <div className="flex flex-col flex-wrap mt-1 text-gray-800 max-w-sm">
         {Object.keys(inputs.amenities).map((amenity, index) => (
-          <div key={index} className='flex items-center gap-2 mt-1'>
+          <div key={index} className="flex items-center gap-2 mt-1">
             <input
-              type='checkbox'
+              type="checkbox"
               id={`amenity${index + 1}`}
               checked={inputs.amenities[amenity]}
               onChange={() =>
@@ -188,9 +193,13 @@ const AddRoom = () => {
       </div>
 
       <button
-        className='bg-primary text-white px-8 py-2 rounded mt-8 cursor-pointer'
+        type="submit"
+        disabled={loading}
+        className={`bg-primary text-white px-8 py-2 rounded mt-8 cursor-pointer ${
+          loading ? 'opacity-70 cursor-not-allowed' : ''
+        }`}
       >
-        Add Room
+        {loading ? 'Adding...' : 'Add Room'}
       </button>
     </form>
   )
