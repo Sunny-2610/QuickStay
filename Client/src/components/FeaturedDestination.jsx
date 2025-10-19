@@ -1,14 +1,14 @@
 // FeaturedDestination.jsx
 import React from 'react'
-import { roomsDummyData } from '../assets/assets'
 import HotelCard from './HotelCard'
 import Title from './Title'
 import { useNavigate } from 'react-router-dom'
+import { useAppContext } from '../context/AppContext'
 
 const FeaturedDestination = () => {
-  const navigate = useNavigate(); // ✅ use it inside the component
+  const {rooms,navigate} = useAppContext()
 
-  return (
+   return rooms.length > 0 && (
     <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 mt-12 md:mt-20">
       <Title 
         title={'Featured Destination'} 
@@ -17,7 +17,7 @@ const FeaturedDestination = () => {
       
       {/* 1 col default, 2 md, 4 lg */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {roomsDummyData.slice(0, 4).map((room, index) => (
+        {rooms.slice(0, 4).map((room, index) => (
           <HotelCard key={room._id} room={room} index={index} />
         ))}
       </div>

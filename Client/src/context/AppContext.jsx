@@ -19,10 +19,27 @@ export const AppProvider = ({ children }) => {
 const [isOwner, setIsOwner] = useState(false);
 const [showHotelReg, setShowHotelReg] = useState(false);
 const [searchedcities, setSearchedCities] = useState([])
+const [rooms, setRooms] = useState([])
 
+//fetching Rooms from database
+const fetchRooms = async () => {
+  try {
+    const { data } = await axios.get('/api/rooms');
+    if(data.success) {
+      setRooms(data.rooms);
+    } else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    toast.error(error.message);
+  }
+}
+
+
+// Fetching the user 
     const fetchUser = async( ) => {
         try {
-            const {data} = await axios.get("/api/user/", {headers: {Authorization: `Bearer ${await getToken()}`}});
+            const {data} = await axios.get("/api/user", {headers: {Authorization: `Bearer ${await getToken()}`}});
             if (data.success) {
                 setIsOwner(data.role === "hotelOwner")
                 setSearchedCities(data.recentSearchedCities)
@@ -45,11 +62,16 @@ const [searchedcities, setSearchedCities] = useState([])
         if(user) {
             fetchUser()
         }
-    }, [user])
+    }, [user])     
+
+    useEffect(() => {
+      fetchRooms();
+    }, []);
+
      
 
   const value = {
-    currency, navigate, user, getToken, isOwner, setIsOwner, showHotelReg, setShowHotelReg ,axios,searchedcities, setSearchedCities
+    currency, navigate, user, getToken, isOwner, setIsOwner, showHotelReg, setShowHotelReg ,axios,searchedcities, setSearchedCities, rooms ,setRooms
   }; // put your context data or functions here
 
   return (

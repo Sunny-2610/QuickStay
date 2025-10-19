@@ -1,8 +1,10 @@
 // src/pages/AllRooms.jsx
-import React, { useState } from 'react';
-import { roomsDummyData, facilityIcons } from '../assets/assets';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react';
+import { facilityIcons } from '../assets/assets';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import StarRating from '../components/StarRating';
+import { useAppContext } from '../context/AppContext';
+import toast from 'react-hot-toast';
 
 /* ---------- reusable controls ---------- */
 const CheckBox = ({ label, selected = false, onChange = () => {} }) => (
@@ -30,7 +32,17 @@ const RadioButton = ({ label, selected = false, onChange = () => {} }) => (
 
 /* ---------- main page ---------- */
 const AllRooms = () => {
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { axios, navigate, currency } = useAppContext();
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedFilters, setSelectedFilters] = useState({
+    roomType: [],
+    priceRange: [],
+  });
+
+  const [selectedSort, setSelectedSort] = useState('');
+
 
   /* ---- filter state ---- */
   const [showFilters, setShowFilters] = useState(false);   // mobile toggle
@@ -38,8 +50,8 @@ const AllRooms = () => {
   const [selectedPrice, setSelectedPrice] = useState([]);
   const [sortBy, setSortBy] = useState('');
 
-  const roomTypes   = ['Single Bed', 'Double Bed', 'Luxury Room', 'Family Suite'];
-  const priceRanges = ['0-500', '500-1000', '1000-1500', '2000-3000'];
+  const roomTypes   = ['Single Bed', 'Double Bed', 'Luxury Bed', 'Family Suites'];
+  const priceRanges = ['0-500', '500-1000', '1000-1500', '1500-2000', '2000+'];
   const sortOptions = ['Price - Low to High', 'Price - High to Low', 'Newest First'];
 
   /* ---- handlers ---- */
@@ -56,22 +68,87 @@ const AllRooms = () => {
       .slice(0, 3)
       .map((url, i) => <img key={i} src={url} alt="amenity" className="w-5 h-5" />);
 
-  /* ---- filtered & sorted ---- */
-  let filtered = roomsDummyData.filter(r => {
-    if (selectedRooms.length && !selectedRooms.includes(r.roomType)) return false;
-    if (selectedPrice.length) {
-      const inRange = selectedPrice.some(range => {
-        const [min, max] = range.split('-').map(Number);
-        return r.pricePerNight >= min && r.pricePerNight <= max;
-      });
-      if (!inRange) return false;
+  // Fetch rooms from API
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get('/api/rooms');
+      if (data.success) {
+        setRooms(data.rooms);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    } finally {
+      setLoading(false);
     }
-    return true;
-  });
+  };
 
-  if (sortBy === 'Price - Low to High')  filtered = [...filtered].sort((a, b) => a.pricePerNight - b.pricePerNight);
-  if (sortBy === 'Price - High to Low')  filtered = [...filtered].sort((a, b) => b.pricePerNight - a.pricePerNight);
-  if (sortBy === 'Newest First')         filtered = [...filtered].reverse();
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  // Function to check if a room matches the selected room types
+  const matchesRoomType = (room) => {
+    return selectedRooms.length === 0 || selectedRooms.includes(room.roomType);
+  };
+
+  // Function to check if a room matches the selected price ranges
+  const matchesPriceRange = (room) => {
+    if (selectedPrice.length === 0) return true;
+    
+    return selectedPrice.some((range) => {
+      if (range.includes('+')) {
+        // Handle "2000+" case
+        const min = parseInt(range.replace('+', ''));
+        return room.pricePerNight >= min;
+      } else {
+        // Handle ranges like "0-500", "500-1000"
+        const [min, max] = range.split('-').map(Number);
+        return room.pricePerNight >= min && room.pricePerNight <= max;
+      }
+    });
+  };
+
+  // Function to sort rooms based on the selected sort option
+  const sortRooms = (a, b) => {
+    if (selectedSort === 'Price - Low to High') {
+      return a.pricePerNight - b.pricePerNight;
+    }
+    if (selectedSort === 'Price - High to Low') { 
+      return b.pricePerNight - a.pricePerNight;
+    }     
+    if (selectedSort === 'Newest First') {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return 0;
+  };   
+
+  // Filter Destinations
+  const filterDestination = (room) => {
+    const destination = searchParams.get('destination');
+    if (!destination) return true;
+    return room.hotel.city.toLowerCase().includes(destination.toLowerCase());
+  };
+
+  // Filter and sort rooms based on the selected filters and sort options
+  const filteredRooms = useMemo(() => {
+    return rooms.filter(room => 
+      matchesRoomType(room) && 
+      matchesPriceRange(room) &&
+      filterDestination(room)
+    ).sort(sortRooms);
+  }, [rooms, selectedRooms, selectedPrice, selectedSort, searchParams]);
+
+  // Clear All Filters
+  const clearFilters = () => {
+    setSelectedRooms([]);
+    setSelectedPrice([]);
+    setSortBy('');
+    setSelectedSort('');
+  };
+
 
   return (
     <div className="min-h-screen pt-28 px-4 md:px-16 lg:px-24">
@@ -97,7 +174,7 @@ const AllRooms = () => {
           <div className="mt-3 bg-white border border-gray-300 rounded-xl p-4 shadow">
             <div className="flex items-center justify-between mb-3">
               <p className="font-semibold text-sm">FILTERS</p>
-              <span onClick={clearAll} className="text-xs underline cursor-pointer">CLEAR</span>
+              <span onClick={clearFilters} className="text-xs underline cursor-pointer">CLEAR</span>
             </div>
 
             <div>
@@ -110,14 +187,17 @@ const AllRooms = () => {
             <div className="mt-4">
               <p className="font-medium text-gray-800 pb-2">Price Range</p>
               {priceRanges.map((p) => (
-                <CheckBox key={p} label={`$ ${p}`} selected={selectedPrice.includes(p)} onChange={togglePrice} />
+                <CheckBox key={p} label={`$${p}`} selected={selectedPrice.includes(p)} onChange={togglePrice} />
               ))}
             </div>
 
             <div className="mt-4">
               <p className="font-medium text-gray-800 pb-2">Sort By</p>
               {sortOptions.map((s) => (
-                <RadioButton key={s} label={s} selected={sortBy === s} onChange={handleSort} />
+                <RadioButton key={s} label={s} selected={sortBy === s} onChange={(checked, label) => {
+                  setSortBy(label);
+                  setSelectedSort(label);
+                }} />
               ))}
             </div>
           </div>
@@ -128,7 +208,12 @@ const AllRooms = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-8">
         {/* cards column */}
         <div className="sm:col-span-2 flex flex-col gap-6">
-          {filtered.map((room) => (
+          {loading ? (
+            <div className="text-center py-8">Loading rooms...</div>
+          ) : filteredRooms.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No rooms found matching your criteria.</div>
+          ) : (
+            filteredRooms.map((room) => (
             <div
               key={room._id}
               className="bg-white rounded-xl shadow hover:shadow-lg transition-shadow p-5"
@@ -173,7 +258,8 @@ const AllRooms = () => {
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* desktop sticky panel */}
@@ -181,7 +267,7 @@ const AllRooms = () => {
           <div className="sticky top-20 bg-white border border-gray-300 rounded-xl p-4 w-full sm:w-80 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="font-semibold text-sm">FILTERS</p>
-              <span onClick={clearAll} className="text-xs underline cursor-pointer">CLEAR</span>
+              <span onClick={clearFilters} className="text-xs underline cursor-pointer">CLEAR</span>
             </div>
 
             <div className="mt-4">
@@ -194,14 +280,17 @@ const AllRooms = () => {
             <div className="mt-4">
               <p className="font-medium text-gray-800 pb-2">Price Range</p>
               {priceRanges.map((p) => (
-                <CheckBox key={p} label={`$ ${p}`} selected={selectedPrice.includes(p)} onChange={togglePrice} />
+                <CheckBox key={p} label={`$${p}`} selected={selectedPrice.includes(p)} onChange={togglePrice} />
               ))}
             </div>
 
             <div className="mt-4">
               <p className="font-medium text-gray-800 pb-2">Sort By</p>
               {sortOptions.map((s) => (
-                <RadioButton key={s} label={s} selected={sortBy === s} onChange={handleSort} />
+                <RadioButton key={s} label={s} selected={sortBy === s} onChange={(checked, label) => {
+                  setSortBy(label);
+                  setSelectedSort(label);
+                }} />
               ))}
             </div>
           </div>
