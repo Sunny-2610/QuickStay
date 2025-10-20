@@ -1,32 +1,39 @@
-// FeaturedDestination.jsx
+// RecommendedHotel.jsx
 import React, { useState, useEffect } from 'react';
 import HotelCard from './HotelCard';
 import Title from './Title';
 import { useAppContext } from '../context/AppContext';
 
 const RecommendedHotel = () => {
-  const { rooms, searchedcities } = useAppContext(); // fixed to match context
+  const { rooms, searchedcities } = useAppContext();
   const [recommended, setRecommended] = useState([]);
 
   const filterHotels = () => {
-    // Use searchedcities (corrected) from context
-    const filteredHotels = rooms
-      .slice()
-      .filter((room) => searchedcities?.includes(room.hotel.city));
-    setRecommended(filteredHotels);
+    // If user has searched cities, show hotels from those cities
+    if (searchedcities && searchedcities.length > 0) {
+      const filteredHotels = rooms
+        .slice()
+        .filter((room) => searchedcities.includes(room.hotel.city));
+      setRecommended(filteredHotels);
+    } else {
+      // Otherwise, show all rooms (featured hotels as recommended)
+      setRecommended(rooms.slice(0, 4));
+    }
   };
 
   useEffect(() => {
     filterHotels();
-  }, [rooms, searchedcities]); // fixed dependency
+  }, [rooms, searchedcities]);
 
   return (
     recommended.length > 0 && (
       <div className='max-w-6xl mx-auto px-4 md:px-8 py-8 mt-12 md:mt-20'>
         <Title
-          title={'Recommended Hotels'}
+          title={searchedcities?.length > 0 ? 'Recommended Hotels' : 'Popular Hotels'}
           subtitle={
-            'Discover our handpicked selection of exceptional properties around the world, offering unparalleled luxury and unforgettable experiences.'
+            searchedcities?.length > 0
+              ? 'Based on your recent searches'
+              : 'Discover our handpicked selection of exceptional properties around the world, offering unparalleled luxury and unforgettable experiences.'
           }
         />
 
